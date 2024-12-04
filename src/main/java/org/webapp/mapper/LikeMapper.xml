@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.webapp.mapper.LikeMapper">
+    <select id="listLikeToVideo" resultType="org.webapp.pojo.VideoDO">
+        select video_list.video_id, user_id,
+        video_url, cover_url, title, description,
+        visit_count, like_count, comment_count,
+        created_at, updated_at, deleted_at, video_list.is_deleted
+        from video_list join like_list
+        on video_list.video_id=like_list.to_video_id
+        where like_list.from_user_id=#{user_id}
+        and like_list.is_disliked=0
+        and like_list.is_deleted=0
+        limit #{offset},#{limit}
+    </select>
+    <select id="listFollow" resultType="org.webapp.pojo.UserVO">
+        select user_list.user_id, username, avatar_url
+        from user_list join like_list
+        on user_list.user_id=like_list.to_user_id
+        where like_list.from_user_id=#{user_id}
+        and like_list.is_disliked=0
+        and like_list.is_deleted=0
+        limit #{offset},#{limit}
+    </select>
+    <select id="listFans" resultType="org.webapp.pojo.UserVO">
+        select user_list.user_id, username, avatar_url
+        from user_list join like_list
+        on user_list.user_id=like_list.from_user_id
+        where like_list.to_user_id=#{user_id}
+        and like_list.is_disliked=0
+        and like_list.is_deleted=0
+        limit #{offset},#{limit}
+    </select>
+    <select id="listFriend" resultType="org.webapp.pojo.UserVO">
+        select user_list.user_id, username, avatar_url
+        from user_list join like_list FIRST
+        on user_list.user_id=FIRST.to_user_id
+        join like_list SECOND
+        on FIRST.from_user_id=SECOND.to_user_id
+        where FIRST.to_user_id=SECOND.from_user_id
+        and FIRST.from_user_id=#{user_id}
+        and FIRST.is_disliked=0
+        and SECOND.is_disliked=0
+        and FIRST.is_deleted=0
+        and SECOND.is_deleted=0
+        limit #{offset},#{limit}
+    </select>
+    <select id="countFriend" resultType="java.lang.Long">
+        select count(0) from like_list FIRST
+        join like_list SECOND on FIRST.from_user_id=SECOND.to_user_id
+        where FIRST.to_user_id=SECOND.from_user_id
+        and FIRST.from_user_id=#{user_id}
+        and FIRST.is_disliked=0
+        and SECOND.is_disliked=0
+        and FIRST.is_deleted=0
+        and SECOND.is_deleted=0
+    </select>
+    <select id="listBlock" resultType="org.webapp.pojo.UserVO">
+        select user_list.user_id, username, avatar_url
+        from user_list join like_list on user_list.user_id=like_list.to_user_id
+        where like_list.from_user_id=#{user_id}
+        and like_list.is_disliked=1
+        and like_list.is_deleted=0
+        limit #{offset},#{limit}
+    </select>
+</mapper>
