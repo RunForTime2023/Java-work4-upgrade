@@ -1,7 +1,6 @@
 package org.webapp.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.webapp.utils.RedisUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -39,18 +39,16 @@ public class ChatServiceImpl implements ChatService {
         if ("none".equals(image) || !FileUtils.saveImage(fromUserId, toUserId, image, imageUrl)) {
             imageUrl = "none";
         }
-        LambdaUpdateWrapper<MessageDO> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.set(MessageDO::getImageUrl, imageUrl).eq(MessageDO::getMessageId, message.getMessageId());
-        messageMapper.update(lambdaUpdateWrapper);
+        messageMapper.updateMessage(message.getMessageId(), imageUrl);
         message.setImageUrl(imageUrl);
         redisTools.saveMessage(message);
         if ("none".equals(toGroupId)) {
-            redisTools.saveUnreadUserMessage(fromUserId, toUserId, message.getMessageId());
+            redisTools.saveUnreadMessage(fromUserId, toUserId, message.getMessageId(), false);
             log.info("The user: {} send the message to the user: {}.", fromUserId, toUserId);
         } else {
             List<MemberDO> memberList = memberMapper.getMembersInGroup(fromUserId, toGroupId);
             for (MemberDO member : memberList) {
-                redisTools.saveUnreadGroupMessage(fromUserId, member.getFromUserId(), message.getMessageId());
+                redisTools.saveUnreadMessage(toGroupId, member.getFromUserId(), message.getMessageId(), true);
             }
             log.info("The user: {} send the message to the group: {}.", fromUserId, toGroupId);
         }
@@ -59,10 +57,11 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public GroupDO saveGroup(String groupName, String userId, List<String> memberList) {
-        GroupDO group = new GroupDO(groupName, userId, memberList.size());
+        LocalDateTime time = LocalDateTime.now();
+        GroupDO group = new GroupDO(groupName, userId, memberList.size(), time);
         groupMapper.insert(group);
         for (String memberId : memberList) {
-            MemberDO member = new MemberDO(memberId, group.getGroupId());
+            MemberDO member = new MemberDO(memberId, group.getGroupId(), time);
             memberMapper.insert(member);
         }
         log.info("The user: {} creates the group: {}.", userId, group.getGroupId());
@@ -73,7 +72,7 @@ public class ChatServiceImpl implements ChatService {
     public void saveMember(String userId, String groupId) {
         LocalDateTime time = LocalDateTime.now();
         if (memberMapper.getMember(userId, groupId) == null) {
-            MemberDO member = new MemberDO(userId, groupId);
+            MemberDO member = new MemberDO(userId, groupId, time);
             memberMapper.insert(member);
         } else {
             memberMapper.updateMember(userId, groupId, time);
@@ -106,19 +105,17 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public List<MessageDO> listUserMessageNotRead(String ownUserId, String otherUserId) {
         List<String> messageIdList = redisTools.listUnreadUserMessageId(ownUserId, otherUserId);
-        List<MessageDO> messageList = new ArrayList<>();
-        if (messageIdList != null) {
-            for (String messageId : messageIdList) {
-                if (redisTools.isKeyExist("message:" + messageId)) {
-                    messageList.add(redisTools.getMessage(messageId));
-                } else {
-                    MessageDO message = messageMapper.selectById(messageId);
-                    messageList.add(message);
-                    redisTools.saveMessage(message);
-                }
+        List<MessageDO> messageList = Collections.synchronizedList(new ArrayList<>());
+        for (String messageId : messageIdList) {
+            if (redisTools.isKeyExist("message:" + messageId)) {
+                messageList.add(redisTools.getMessage(messageId));
+            } else {
+                MessageDO message = messageMapper.selectById(messageId);
+                messageList.add(message);
+                redisTools.saveMessage(message);
             }
-            redisTools.removeUnreadUserMessageRecord(ownUserId, otherUserId);
         }
+        redisTools.removeUnreadUserMessageRecord(ownUserId, otherUserId);
         return messageList;
     }
 
@@ -133,19 +130,17 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public List<MessageDO> listGroupMessageNotRead(String userId, String groupId) {
         List<String> messageIdList = redisTools.listUnreadGroupMessageId(userId, groupId);
-        List<MessageDO> messageList = new ArrayList<>();
-        if (messageIdList != null) {
-            for (String messageId : messageIdList) {
-                if (redisTools.isKeyExist("message:" + messageId)) {
-                    messageList.add(redisTools.getMessage(messageId));
-                } else {
-                    MessageDO message = messageMapper.selectById(messageId);
-                    messageList.add(message);
-                    redisTools.saveMessage(message);
-                }
+        List<MessageDO> messageList = Collections.synchronizedList(new ArrayList<>());
+        for (String messageId : messageIdList) {
+            if (redisTools.isKeyExist("message:" + messageId)) {
+                messageList.add(redisTools.getMessage(messageId));
+            } else {
+                MessageDO message = messageMapper.selectById(messageId);
+                messageList.add(message);
+                redisTools.saveMessage(message);
             }
-            redisTools.removeUnreadGroupMessageRecord(userId, groupId);
         }
+        redisTools.removeUnreadGroupMessageRecord(userId, groupId);
         return messageList;
     }
 

@@ -1,5 +1,6 @@
 package org.webapp.service;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,6 +12,8 @@ import org.webapp.mapper.UserMapper;
 import org.webapp.pojo.UserDO;
 import org.webapp.pojo.UserVO;
 import org.webapp.utils.RedisUtils;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -67,7 +70,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public void removeUser(String userId) {
-        userMapper.removeUser(userId);
+        LambdaUpdateWrapper<UserDO> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.set(UserDO::getDeletedAt, LocalDateTime.now()).set(UserDO::isDeleted, true).eq(UserDO::getUserId, userId);
+        userMapper.update(lambdaUpdateWrapper);
     }
 
     // 为利用索引，此处的username代表用户ID

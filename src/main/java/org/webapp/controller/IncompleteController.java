@@ -68,7 +68,7 @@ public class IncompleteController {
      */
     @PostMapping(value = "/comment/like", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @Transactional
-    public ResponseVO saveCommentLike(@RequestParam("comment_id") String commentId, @RequestParam("action_type") int actionType, @RequestHeader("Access-Token") String token) {
+    public ResponseVO saveLikeToComment(@RequestParam("comment_id") String commentId, @RequestParam("action_type") int actionType, @RequestHeader("Access-Token") String token) {
         ResponseVO response;
         String userId = JwtUtils.getUserId(token);
         if (actionType < 0 || actionType > 3) {

@@ -31,7 +31,7 @@ public class ContactController {
      */
     @PostMapping(value = "/relation/action", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @Transactional
-    public ResponseVO saveUserLike(@RequestParam("action_type") int actionType, @RequestParam("to_user_id") String toUserId, @RequestHeader("Access-Token") String token) {
+    public ResponseVO saveFollow(@RequestParam("action_type") int actionType, @RequestParam("to_user_id") String toUserId, @RequestHeader("Access-Token") String token) {
         ResponseVO response;
         String userId = JwtUtils.getUserId(token);
         if (actionType < 0 || actionType > 3 || userId.equals(toUserId)) {
@@ -67,7 +67,7 @@ public class ContactController {
      */
     @GetMapping("/following/list")
     @Transactional(readOnly = true)
-    public ResponseVO listFollowing(@RequestParam("user_id") String userId, @RequestParam("page_size") int pageSize, @RequestParam("page_num") int pageNum) {
+    public ResponseVO listFollow(@RequestParam("user_id") String userId, @RequestParam("page_size") int pageSize, @RequestParam("page_num") int pageNum) {
         ResponseVO response;
         if (pageSize <= 0 || pageSize > 100 || pageNum <= 0) {
             response = new ResponseVO(StatusCode.WRONG_PARAMETERS, StatusMessage.WRONG_PARAMETERS);
@@ -126,7 +126,7 @@ public class ContactController {
      */
     @GetMapping("/friends/list")
     @Transactional(readOnly = true)
-    public ResponseVO listFriends(@RequestParam("page_size") int pageSize, @RequestParam("page_num") int pageNum, @RequestHeader("Access-Token") String token) {
+    public ResponseVO listFriend(@RequestParam("page_size") int pageSize, @RequestParam("page_num") int pageNum, @RequestHeader("Access-Token") String token) {
         ResponseVO response;
         if (pageSize <= 0 || pageSize > 100 || pageNum <= 0) {
             response = new ResponseVO(StatusCode.WRONG_PARAMETERS, StatusMessage.WRONG_PARAMETERS);
@@ -152,7 +152,7 @@ public class ContactController {
      */
     @GetMapping("/block/list")
     @Transactional(readOnly = true)
-    public ResponseVO listBlocks(@RequestParam("page_size") int pageSize, @RequestParam("page_num") int pageNum, @RequestHeader("Access-Token") String token) {
+    public ResponseVO listBlock(@RequestParam("page_size") int pageSize, @RequestParam("page_num") int pageNum, @RequestHeader("Access-Token") String token) {
         ResponseVO response;
         if (pageSize <= 0 || pageSize > 100 || pageNum <= 0) {
             response = new ResponseVO(StatusCode.WRONG_PARAMETERS, StatusMessage.WRONG_PARAMETERS);

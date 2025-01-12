@@ -22,7 +22,7 @@ public class RedisUtils {
 
     public void saveUser(UserVO user) {
         stringRedisTemplate.opsForHash().putAll("user:" + user.getUserId(), CustomizeUtils.convertPojoToMap(user));
-        stringRedisTemplate.expire("user:" + user.getUserId(), 1, TimeUnit.DAYS);
+        stringRedisTemplate.expire("user:" + user.getUserId(), 6, TimeUnit.HOURS);
     }
 
     public UserVO getUser(String userId) {
@@ -39,12 +39,13 @@ public class RedisUtils {
 
     public void saveVideo(VideoDO video) {
         stringRedisTemplate.opsForHash().putAll("video:" + video.getVideoId(), CustomizeUtils.convertPojoToMap(video));
-        stringRedisTemplate.expire("video:" + video.getVideoId(), 1, TimeUnit.DAYS);
+        stringRedisTemplate.expire("video:" + video.getVideoId(), 6, TimeUnit.HOURS);
         stringRedisTemplate.opsForZSet().add("rank_list", video.getVideoId(), video.getVisitCount());
     }
 
     public void saveSearchRecord(String userId, String keywords) {
-        stringRedisTemplate.opsForList().rightPush("keywords:" + userId, keywords);
+        stringRedisTemplate.opsForList().leftPush("keywords:" + userId, keywords);
+        stringRedisTemplate.opsForList().trim("keywords:" + userId, 0, 29);
     }
 
     public VideoDO getVideo(String videoId) {
@@ -70,15 +71,15 @@ public class RedisUtils {
 
     public void saveMessage(MessageDO message) {
         stringRedisTemplate.opsForHash().putAll("message:" + message.getMessageId(), CustomizeUtils.convertPojoToMap(message));
-        stringRedisTemplate.expire("message:" + message.getMessageId(), 1, TimeUnit.DAYS);
+        stringRedisTemplate.expire("message:" + message.getMessageId(), 3, TimeUnit.HOURS);
     }
 
-    public void saveUnreadUserMessage(String fromUserId, String toUserId, String messageId) {
-        stringRedisTemplate.opsForList().rightPush("unread:" + toUserId + ":person:" + fromUserId, messageId);
-    }
-
-    public void saveUnreadGroupMessage(String fromUserId, String toGroupId, String messageId) {
-        stringRedisTemplate.opsForList().rightPush("unread:" + fromUserId + ":group:" + toGroupId, messageId);
+    public void saveUnreadMessage(String fromUserOrGroupId, String toUserId, String messageId, boolean isGroup) {
+        if (isGroup) {
+            stringRedisTemplate.opsForList().leftPush("unread:" + toUserId + ":group:" + fromUserOrGroupId, messageId);
+        } else {
+            stringRedisTemplate.opsForList().leftPush("unread:" + toUserId + ":person:" + fromUserOrGroupId, messageId);
+        }
     }
 
     public MessageDO getMessage(String messageId) {

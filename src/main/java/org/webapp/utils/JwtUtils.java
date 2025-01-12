@@ -25,7 +25,7 @@ public class JwtUtils {
         try {
             return JWT.require(Algorithm.HMAC256(SECRET)).withIssuer(ISSUER).build().verify(token).getClaim("user_id").asString();
         } catch (JWTVerificationException e) {
-            return null;
+            return "anonymous";
         }
     }
 }

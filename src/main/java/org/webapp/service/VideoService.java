@@ -17,7 +17,7 @@ public interface VideoService {
 
     Page<VideoDO> listVideoByUserIdWithPaging(String userId, int pageSize, int pageNum);
 
-    Page<VideoDO> listVideoByKeywordsWithPaging(String keywords, int pageSize, int pageNum);
+    Page<VideoDO> listVideoByKeywordsWithPaging(String userId, String keywords, int pageSize, int pageNum);
 
     void updateVisitCount(String videoId);
 

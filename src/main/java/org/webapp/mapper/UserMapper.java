@@ -27,10 +27,4 @@ public interface UserMapper extends BaseMapper<UserDO> {
         lambdaUpdateWrapper.set(column, value).set(UserDO::getUpdatedAt, LocalDateTime.now()).eq(UserDO::getUserId, userId);
         this.update(lambdaUpdateWrapper);
     }
-
-    default void removeUser(String userId) {
-        LambdaUpdateWrapper<UserDO> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.set(UserDO::getDeletedAt, LocalDateTime.now()).set(UserDO::isDeleted, true).eq(UserDO::getUserId, userId);
-        this.update(lambdaUpdateWrapper);
-    }
 }

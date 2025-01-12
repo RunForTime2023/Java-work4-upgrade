@@ -28,7 +28,7 @@ public class RequestVerifyHandler extends SimpleChannelInboundHandler<FullHttpRe
             channelHandlerContext.close();
         }
         String userId = JwtUtils.getUserId(msg.headers().get("Access-Token"));
-        if (userId == null) {
+        if ("anonymous".equals(userId)) {
             channelHandlerContext.channel().close();
         } else {
             String channelId = channelHandlerContext.channel().id().asShortText();

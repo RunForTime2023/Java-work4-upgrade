@@ -82,15 +82,13 @@ public class VideoServiceImpl implements VideoService {
         List<VideoDO> videoList = new ArrayList<>();
         if (offset < total) {
             Set<String> result = redisTools.listVideoId(offset, Math.min(total, offset + pageSize) - 1);
-            if (result != null) {
-                for (String videoId : result) {
-                    if (redisTools.isKeyExist("video:" + videoId)) {
-                        videoList.add(redisTools.getVideo(videoId));
-                    } else {
-                        VideoDO video = videoMapper.selectById(videoId);
-                        videoList.add(video);
-                        redisTools.saveVideo(video);
-                    }
+            for (String videoId : result) {
+                if (redisTools.isKeyExist("video:" + videoId)) {
+                    videoList.add(redisTools.getVideo(videoId));
+                } else {
+                    VideoDO video = videoMapper.selectById(videoId);
+                    videoList.add(video);
+                    redisTools.saveVideo(video);
                 }
             }
         }
@@ -106,13 +104,17 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
-    public Page<VideoDO> listVideoByKeywordsWithPaging(String keywords, int pageSize, int pageNum) {
+    public Page<VideoDO> listVideoByKeywordsWithPaging(String userId, String keywords, int pageSize, int pageNum) {
         Page<VideoDO> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<VideoDO> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         if (!keywords.isEmpty()) {
-            lambdaQueryWrapper.like(VideoDO::getTitle, keywords).or().like(VideoDO::getDescription, keywords).orderByDesc(VideoDO::getVisitCount);
+            lambdaQueryWrapper.like(VideoDO::getTitle, keywords).or().like(VideoDO::getDescription, keywords);
         }
-        return videoMapper.selectPage(page, lambdaQueryWrapper);
+        Page<VideoDO> result = videoMapper.selectPage(page, lambdaQueryWrapper);
+        if (!"anonymous".equals(userId)) {
+            redisTools.saveSearchRecord(userId, keywords);
+        }
+        return result;
     }
 
     @Override

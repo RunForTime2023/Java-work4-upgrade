@@ -26,12 +26,11 @@ public class GroupDO {
     @TableField("is_deleted")
     private boolean deleted;
 
-    public GroupDO(String groupName, String leaderId, int memberCount) {
+    public GroupDO(String groupName, String leaderId, int memberCount, LocalDateTime createdAt) {
         this.groupName = groupName;
         this.leaderId = leaderId;
         this.memberCount = memberCount;
-        this.createdAt = this.updatedAt = LocalDateTime.now();
-        this.deletedAt = LocalDateTime.of(1970, 1, 1, 8, 0, 1);
+        this.createdAt = this.updatedAt = createdAt;
         this.deleted = false;
     }
 }

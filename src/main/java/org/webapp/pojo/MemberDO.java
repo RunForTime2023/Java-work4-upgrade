@@ -19,9 +19,10 @@ public class MemberDO {
     @TableField("is_deleted")
     private boolean deleted;
 
-    public MemberDO(String fromUserId, String toGroupId) {
+    public MemberDO(String fromUserId, String toGroupId, LocalDateTime createdAt) {
         this.fromUserId = fromUserId;
         this.toGroupId = toGroupId;
+        this.createdAt = this.updatedAt = createdAt;
         this.deleted = false;
     }
 }

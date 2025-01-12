@@ -149,18 +149,23 @@ public class JakartaWebSocketServer {
                     }
                 }
             }
-            // 群聊未读消息记录
+            // 群聊未读消息记录（分页）
             case 8 -> {
-                GroupDO group = chatService.getGroup(clientMessage.getUserOrGroupId());
-                if (group == null) {
-                    response = new ResponseVO(StatusCode.NONEXISTENT_GROUP, StatusMessage.NONEXISTENT_GROUP);
+                int pageSize = clientMessage.getPageSize(), pageNum = clientMessage.getPageNum();
+                if (pageSize <= 0 || pageSize > 100 || pageNum <= 0) {
+                    response = new ResponseVO(StatusCode.WRONG_PARAMETERS, StatusMessage.WRONG_PARAMETERS);
                 } else {
-                    MemberDO member = chatService.getMember(this.userId, clientMessage.getUserOrGroupId());
-                    if (member == null) {
-                        response = new ResponseVO(StatusCode.NOT_IN_GROUP, StatusMessage.NOT_IN_GROUP);
+                    GroupDO group = chatService.getGroup(clientMessage.getUserOrGroupId());
+                    if (group == null) {
+                        response = new ResponseVO(StatusCode.NONEXISTENT_GROUP, StatusMessage.NONEXISTENT_GROUP);
                     } else {
-                        List<MessageDO> messageList = chatService.listGroupMessageNotRead(this.userId, clientMessage.getUserOrGroupId());
-                        response = new ResponseVO(StatusCode.SUCCESS, StatusMessage.SUCCESS, messageList);
+                        MemberDO member = chatService.getMember(this.userId, clientMessage.getUserOrGroupId());
+                        if (member == null) {
+                            response = new ResponseVO(StatusCode.NOT_IN_GROUP, StatusMessage.NOT_IN_GROUP);
+                        } else {
+                            List<MessageDO> messageList = chatService.listGroupMessageNotRead(this.userId, clientMessage.getUserOrGroupId());
+                            response = new ResponseVO(StatusCode.SUCCESS, StatusMessage.SUCCESS, messageList);
+                        }
                     }
                 }
             }

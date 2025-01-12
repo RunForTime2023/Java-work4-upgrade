@@ -106,7 +106,7 @@ public class VideoController {
 
     /**
      * 热门排行榜
-     * 调用Redis缓存
+     * 使用Redis缓存，仅展示播放量前1000名的视频
      *
      * @param pageSize 页面尺寸
      * @param pageNum  页码
@@ -115,7 +115,7 @@ public class VideoController {
     @Transactional(readOnly = true)
     public ResponseVO listPopularVideo(@RequestParam("page_size") int pageSize, @RequestParam("page_num") int pageNum) {
         ResponseVO response;
-        if (pageSize <= 0 || pageSize > 100 || pageNum <= 0) {
+        if (pageSize <= 0 || pageSize > 100 || pageNum <= 0 || pageSize * pageNum > 1000) {
             response = new ResponseVO(StatusCode.WRONG_PARAMETERS, StatusMessage.WRONG_PARAMETERS);
         } else {
             List<VideoDO> videoList = videoService.listVideoByVisitCountDescWithPaging(pageSize, pageNum);
@@ -140,12 +140,8 @@ public class VideoController {
         if (pageSize <= 0 || pageSize > 100 || pageNum <= 0 || keywords.length() > 100) {
             response = new ResponseVO(StatusCode.WRONG_PARAMETERS, StatusMessage.WRONG_PARAMETERS);
         } else {
-            Page<VideoDO> videoList = videoService.listVideoByKeywordsWithPaging(keywords, pageSize, pageNum);
             String userId = JwtUtils.getUserId(token);
-            if (userId == null) {
-                userId = "anonymous";
-            }
-            videoService.saveSearchRecord(userId, keywords);
+            Page<VideoDO> videoList = videoService.listVideoByKeywordsWithPaging(userId, keywords, pageSize, pageNum);
             response = new ResponseVO(StatusCode.SUCCESS, StatusMessage.SUCCESS, videoList.getRecords(), videoList.getTotal());
         }
         return response;
